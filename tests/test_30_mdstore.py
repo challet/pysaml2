@@ -98,7 +98,6 @@ TEST_METADATA_STRING = """
 </EntitiesDescriptor>
 """.format(cert_data=TEST_CERT)
 
-
 ATTRCONV = ac_factory(full_path("attributemaps"))
 
 METADATACONF = {
@@ -162,6 +161,10 @@ METADATACONF = {
     "14": [{
         "class": "saml2.mdstore.MetaDataFile",
         "metadata": [(full_path("invalid_metadata_file.xml"),)],
+    }],
+    "11": [{
+        "class": "saml2.mdstore.InMemoryMetaData",
+        "metadata": [(TEST_METADATA_STRING,)]
     }],
 }
 
@@ -520,7 +523,26 @@ def test_get_certs_from_metadata():
     certs1 = mds.certs("http://xenosmilus.umdc.umu.se/simplesaml/saml2/idp/metadata.php", "any")
     certs2 = mds.certs("http://xenosmilus.umdc.umu.se/simplesaml/saml2/idp/metadata.php", "idpsso")
 
-    assert certs1[0] == certs2[0] == TEST_CERT
+    assert certs1[0][1] == certs2[0][1] == TEST_CERT
+
+
+def test_get_unnamed_certs_from_metadata():
+    mds = MetadataStore(ATTRCONV, None)
+    mds.imp(METADATACONF["11"])
+    certs1 = mds.certs("http://xenosmilus.umdc.umu.se/simplesaml/saml2/idp/metadata.php", "any")
+    certs2 = mds.certs("http://xenosmilus.umdc.umu.se/simplesaml/saml2/idp/metadata.php", "idpsso")
+
+    assert certs1[0][0] is None 
+    assert certs2[0][0] is None
+
+
+def test_get_named_certs_from_metadata():
+    mds = MetadataStore(ATTRCONV, None)
+    mds.imp(METADATACONF["3"])
+    certs1 = mds.certs("https://coip-test.sunet.se/shibboleth", "spsso", "signing")
+    certs2 = mds.certs("https://coip-test.sunet.se/shibboleth", "spsso", "encryption")
+
+    assert certs1[0][0] == certs2[0][0] == "coip-test.sunet.se"
 
 
 def test_get_certs_from_metadata_without_keydescriptor():

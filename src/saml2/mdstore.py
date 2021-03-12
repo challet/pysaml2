@@ -489,17 +489,21 @@ class MetaData(object):
                 if "key_descriptor" in srv:
                     for key in srv["key_descriptor"]:
                         if "use" in key and key["use"] == use:
+                            key_name = (key["key_info"]["key_name"][0]["text"]
+                                        if "key_name" in key["key_info"] else None)
                             for dat in key["key_info"]["x509_data"]:
                                 cert = repack_cert(
                                     dat["x509_certificate"]["text"])
                                 if cert not in res:
-                                    res.append(cert)
-                        elif not "use" in key:
+                                    res.append((key_name, cert))
+                        elif "use" not in key:
+                            key_name = (key["key_info"]["key_name"][0]["text"]
+                                        if "key_name" in key["key_info"] else None)
                             for dat in key["key_info"]["x509_data"]:
                                 cert = repack_cert(
                                     dat["x509_certificate"]["text"])
                                 if cert not in res:
-                                    res.append(cert)
+                                    res.append((key_name, cert))
 
             return res
 
@@ -516,7 +520,6 @@ class MetaData(object):
         else:
             srvs = ent["%s_descriptor" % descriptor]
             res = extract_certs(srvs)
-
         return res
 
 

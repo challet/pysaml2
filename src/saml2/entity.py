@@ -30,7 +30,6 @@ from saml2.saml import NameID
 from saml2.saml import EncryptedAssertion
 from saml2.saml import Issuer
 from saml2.saml import NAMEID_FORMAT_ENTITY
-from saml2.response import AuthnResponse
 from saml2.response import LogoutResponse
 from saml2.response import UnsolicitedResponse
 from saml2.time_util import instant
@@ -645,23 +644,24 @@ class Entity(HTTPBase):
         _certs = []
 
         if encrypt_cert:
-            _certs.append(encrypt_cert)
+            _certs.append((None, encrypt_cert))
         elif sp_entity_id is not None:
             _certs = self.metadata.certs(sp_entity_id, "any", "encryption")
         exception = None
         for _cert in _certs:
             try:
+                name, cert = _cert
                 begin_cert = "-----BEGIN CERTIFICATE-----\n"
                 end_cert = "\n-----END CERTIFICATE-----\n"
-                if begin_cert not in _cert:
-                    _cert = "%s%s" % (begin_cert, _cert)
+                if begin_cert not in cert:
+                    cert = "%s%s" % (begin_cert, cert)
                 if end_cert not in _cert:
-                    _cert = "%s%s" % (_cert, end_cert)
-                tmp = make_temp(_cert.encode('ascii'),
+                    cert = "%s%s" % (cert, end_cert)
+                tmp = make_temp(cert.encode('ascii'),
                                 decode=False,
                                 delete_tmpfiles=self.config.delete_tmpfiles)
                 response = self.sec.encrypt_assertion(response, tmp.name,
-                                                      pre_encryption_part(),
+                                                      pre_encryption_part(key_name=name),
                                                       node_xpath=node_xpath)
                 return response
             except Exception as ex:

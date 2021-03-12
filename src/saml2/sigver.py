@@ -1435,7 +1435,8 @@ class SecurityContext(object):
                 _certs = []
             certs = []
 
-            for cert in _certs:
+            for _cert in _certs:
+                name, cert = _cert
                 if isinstance(cert, six.string_types):
                     content = pem_format(cert)
                     tmp = make_temp(content,
@@ -1872,8 +1873,8 @@ def pre_signature_part(
 # </EncryptedData>
 
 
-def pre_encryption_part(msg_enc=TRIPLE_DES_CBC, key_enc=RSA_1_5, key_name='my-rsa-key',
-        encrypted_key_id=None, encrypted_data_id=None):
+def pre_encryption_part(msg_enc=TRIPLE_DES_CBC, key_enc=RSA_1_5, key_name=None,
+                        encrypted_key_id=None, encrypted_data_id=None):
     """
 
     :param msg_enc:
@@ -1888,7 +1889,8 @@ def pre_encryption_part(msg_enc=TRIPLE_DES_CBC, key_enc=RSA_1_5, key_name='my-rs
     encrypted_key = EncryptedKey(
         id=ek_id,
         encryption_method=key_encryption_method,
-        key_info=ds.KeyInfo(key_name=ds.KeyName(text=key_name)),
+        key_info=(ds.KeyInfo(key_name=ds.KeyName(text=key_name))
+                  if key_name is not None else None),
         cipher_data=CipherData(cipher_value=CipherValue(text='')),
     )
     key_info = ds.KeyInfo(encrypted_key=encrypted_key)
@@ -1924,8 +1926,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('-s', '--list-sigalgs', dest='listsigalgs',
-            action='store_true',
-            help='List implemented signature algorithms')
+                        action='store_true',
+                        help='List implemented signature algorithms')
     args = parser.parse_args()
 
     if args.listsigalgs:
